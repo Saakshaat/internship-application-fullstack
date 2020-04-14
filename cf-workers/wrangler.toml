@@ -1,4 +1,4 @@
-name = "{{project-name}}"
+name = "cf-workers"
 type = "javascript"
 account_id = ""
 workers_dev = true
