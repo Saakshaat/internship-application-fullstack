@@ -7,7 +7,8 @@ async function handleRequest(request) {
   const endpoint = "https://cfw-takehome.developers.workers.dev/api/variants";
   const urls = await parse(endpoint);
 
-  const response = await distributeRequests(request, endpoint, urls); 
+  const response = await distributeRequests(request, endpoint, urls);
+  console.log(response);
   return response;
 }
 
@@ -25,12 +26,20 @@ async function distributeRequests(request, endpoint, urls) {
    */
 
   const firstVariant = await fetch(urls[0]);
-  const firstContent = await rewriteHTML('First', await firstVariant).text();
+  const firstContent = await rewriteHTML("First", await firstVariant).text();
   const secondVariant = await fetch(urls[1]);
-  const secondContent = await rewriteHTML('Second', await secondVariant).text();
+  const secondContent = await rewriteHTML("Second", await secondVariant).text();
 
-  const FIRST_RESPONSE = new Response(firstContent);
-  const SECOND_RESPONSE = new Response(secondContent);
+  const FIRST_RESPONSE = new Response(firstContent, {
+    headers: {
+      "content-type": "text/html;charset=UTF-8"
+    }
+  });
+  const SECOND_RESPONSE = new Response(secondContent, {
+    headers: {
+      "content-type": "text/html;charset=UTF-8"
+    }
+  });
 
   return processCookie(
     request,
@@ -43,37 +52,54 @@ async function distributeRequests(request, endpoint, urls) {
 
 function rewriteHTML(variant, content) {
   return new HTMLRewriter()
-      .on('title', {
-        element(element) {
-          element.setInnerContent(`${variant} Variant, Saakshaat`);
-        }
-      })
-      .on('a#url', new AttributeHandler('href'))
-      .on('a#url', {
-        element(element) {
-          element.setInnerContent('Check out this awesome developer')
-        }
-      })
-      .on('p#description', {
-        element(element) {
-          element.setInnerContent(`I will confess, the HTMLRewriter API was impressive. <br> Here's the ${variant} page.`)
-        }
-      })
-      .transform(content);
+    .on("*", {
+      element(element) {
+        console.log(element.tagName);
+      }
+    })
+    .on("title", {
+      element(element) {
+        element.setInnerContent(`${variant} Variant`);
+      }
+    })
+    .on("h1#title", {
+      element(element) {
+        element.setInnerContent(`${variant} Webpage. 
+        Saakshaat`);
+      }
+    })
+    .on("a#url", new AttributeHandler("href"))
+    .on("a#url", {
+      element(element) {
+        element.setInnerContent("Check out this awesome developer");
+      }
+    })
+    .on("p#description", {
+      element(element) {
+        element.setInnerContent(
+          `I will confess, the HTMLRewriter API was impressive. 
+            Here's the ${variant} page. Do you think I did a decent job?`
+        );
+      }
+    })
+    .transform(content);
 }
 
 class AttributeHandler {
-  constructor(attributeName){
+  constructor(attributeName) {
     this.attributeName = attributeName;
   }
 
   element(element) {
-    const attribute = element.getAttribute(this.attributeName)
-    if(attribute) {
+    const attribute = element.getAttribute(this.attributeName);
+    if (attribute) {
       element.setAttribute(
         this.attributeName,
-        attribute.replace('https://cloudflare.com', 'https://saakshaat.github.io')
-      )
+        attribute.replace(
+          "https://cloudflare.com",
+          "https://saakshaat.github.io"
+        )
+      );
     }
   }
 }
