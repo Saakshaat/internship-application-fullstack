@@ -7,7 +7,8 @@ async function handleRequest(request) {
   const endpoint = "https://cfw-takehome.developers.workers.dev/api/variants";
   const urls = await parse(endpoint);
 
-  return await distributeRequests(request, endpoint, urls);
+  const response = await distributeRequests(request, endpoint, urls); 
+  return response;
 }
 
 async function parse(endpoint) {
@@ -67,7 +68,6 @@ class AttributeHandler {
   }
 
   element(element) {
-    console.log("I'm here");
     const attribute = element.getAttribute(this.attributeName)
     if(attribute) {
       element.setAttribute(
@@ -78,25 +78,20 @@ class AttributeHandler {
   }
 }
 
-
 const processCookie = (request, endpoint, first, second, urls) => {
   const cookie = request.headers.get("cookie");
-  let response;
 
   if (cookie && cookie.includes("/1")) {
-    response = first;
+    return first;
   } else if (cookie && cookie.includes("/2")) {
-    response = second;
+    return second;
   } else {
     let group = Math.random() < 0.5 ? 1 : 2;
-    response = group === 2 ? first : second;
+    const response = group === 2 ? second : first;
     response.headers.append(
       "Set-Cookie",
       `${endpoint}/${group}=${group}; path=/`
     );
-    req = new Request(`${endpoint}/${group}`);
-    console.log(req);
-    response;
+    return response;
   }
-  return response;
 };
